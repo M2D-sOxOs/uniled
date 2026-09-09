@@ -61,8 +61,7 @@ class UniledUpdateCoordinator(DataUpdateCoordinator):
         )
 
         if self.entry.state not in valid_states:
-            if self.device.available:
-                await self.device.stop()
+            await self.device.stop()
             raise UpdateFailed(f"Invalid entry state: {self.entry.state}")
 
         if self.device.started:
@@ -73,25 +72,44 @@ class UniledUpdateCoordinator(DataUpdateCoordinator):
                     success = await self.device.update(retry)
                 except Exception as ex:
                     if self.device.has_pending_writes:
-                        # Keep user written (optimistic) states visible
-                        # while they may still be reaching the device.
+                        # Recent user writes may still be reaching the
+                        # device, poll failures are ignored meanwhile.
                         _LOGGER.debug(
                             "%s: Update failed, keeping pending user states: %s",
                             self.device.name,
                             str(ex),
                         )
                         return None
-                    raise ConfigEntryError(str(ex)) from ex
+                    self.device.note_poll_failure()
+                    if self.device.poll_failures >= self.device.max_poll_failures:
+                        raise ConfigEntryError(str(ex)) from ex
+                    _LOGGER.debug(
+                        "%s: Update failed: %s (failure %s of %s)",
+                        self.device.name,
+                        str(ex),
+                        self.device.poll_failures,
+                        self.device.max_poll_failures,
+                    )
+                    return None
             if not success:
                 if self.device.has_pending_writes:
-                    # Keep user written (optimistic) states visible
-                    # while they may still be reaching the device.
+                    # Recent user writes may still be reaching the
+                    # device, poll failures are ignored meanwhile.
                     _LOGGER.debug(
                         "%s: Update failed, keeping pending user states",
                         self.device.name,
                     )
                     return None
-                raise UpdateFailed("Device update failed")
+                self.device.note_poll_failure()
+                if self.device.poll_failures >= self.device.max_poll_failures:
+                    raise UpdateFailed("Device update failed")
+                _LOGGER.debug(
+                    "%s: Update failed (failure %s of %s)",
+                    self.device.name,
+                    self.device.poll_failures,
+                    self.device.max_poll_failures,
+                )
+                return None
         else:
             pass
             # raise UpdateFailed("Device not started")
