@@ -198,6 +198,11 @@ class UniledDevice:
         """Started."""
         return self._started
 
+    @property
+    def has_pending_writes(self) -> bool:
+        """Return whether there are unconfirmed user state writes."""
+        return False
+
     async def startup(self, event=None) -> bool:
         """Startup the device."""
         self._started = True

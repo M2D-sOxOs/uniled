@@ -72,8 +72,25 @@ class UniledUpdateCoordinator(DataUpdateCoordinator):
                     retry = None if self.entry.state == ConfigEntryState.LOADED else 0
                     success = await self.device.update(retry)
                 except Exception as ex:
+                    if self.device.has_pending_writes:
+                        # Keep user written (optimistic) states visible
+                        # while they may still be reaching the device.
+                        _LOGGER.debug(
+                            "%s: Update failed, keeping pending user states: %s",
+                            self.device.name,
+                            str(ex),
+                        )
+                        return None
                     raise ConfigEntryError(str(ex)) from ex
             if not success:
+                if self.device.has_pending_writes:
+                    # Keep user written (optimistic) states visible
+                    # while they may still be reaching the device.
+                    _LOGGER.debug(
+                        "%s: Update failed, keeping pending user states",
+                        self.device.name,
+                    )
+                    return None
                 raise UpdateFailed("Device update failed")
         else:
             pass
