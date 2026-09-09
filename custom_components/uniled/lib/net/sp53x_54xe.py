@@ -146,6 +146,20 @@ class SP5XXE(UniledProxy):
             0x8C: SP5XXE_8C(),  # SPI - RGB + 2 CH PWM
         }
 
+    class SP531E(SPTechSig):
+        """SP531E."""
+
+        info = "PWM Single Color (Music) Controller"
+        code = {0x4F: "SP531E"}
+        conf = {0x01: SP5XXE_81()}
+
+    class SP532E(SPTechSig):
+        """SP532E."""
+
+        info = "PWM CCT (Music) Controller"
+        code = {0x50: "SP532E"}
+        conf = {0x03: SP5XXE_83()}
+
     class SP538E_SP548E(SPTechSig):
         """SP538E & SP548E."""
 
@@ -160,10 +174,20 @@ class SP5XXE(UniledProxy):
         code = {0x57: "SP539E", 0x64: "SP549E"}
         conf = {0x08: SP5XXE_88()}
 
+    class SP53AE(SPTechSig):
+        """SP53AE."""
+
+        info = "SPI RGBCCT (Music) Controller"
+        code = {0x58: "SP53AE"}
+        conf = {0x0B: SP5XXE_8B(), 0x0E: SP5XXE_8E()}
+
     MODEL_SIGNATURE_LIST: Final = [
         SP530E,
+        SP531E,
+        SP532E,
         SP538E_SP548E,
         SP539E_SP549E,
+        SP53AE,
     ]
 
     def _make_model(self, model: SPTechSig, code: int) -> SPTechNetModel:
