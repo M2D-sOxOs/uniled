@@ -49,11 +49,13 @@ def _add_sensor_entity(
     coordinator: UniledUpdateCoordinator,
     channel: UniledChannel,
     feature: UniledAttribute | None,
-) -> UniledEntity | None:
+) -> UniledEntity | list[UniledEntity] | None:
     """Create UniLED sensor entity."""
     if feature:
         return UniledSensorEntity(coordinator, channel, feature)
-    if channel.number == 0 and coordinator.device.transport != UNILED_TRANSPORT_NET:
+    if channel.number == 0:
+        if coordinator.device.transport == UNILED_TRANSPORT_NET:
+            return [UniledCommandRetriesSensor(coordinator, channel)]
         return UniledSignalSensor(coordinator, channel)
     return None
 
@@ -94,6 +96,56 @@ class RSSIFeature(SensorAttribute):
             key="rssi",
             group=UniledGroup.DIAGNOSTIC,
             enabled=False,
+        )
+
+
+@dataclass
+class CommandRetriesFeature(SensorAttribute):
+    """UniLED Command Retries Feature Class."""
+
+    def __init__(self) -> None:
+        """Initialize Command Retries Feature."""
+        super().__init__(
+            None,
+            "Command Retries",
+            "mdi:repeat",
+            key="command_retries",
+            group=UniledGroup.DIAGNOSTIC,
+            enabled=True,
+        )
+
+
+class UniledCommandRetriesSensor(
+    UniledEntity, CoordinatorEntity[UniledUpdateCoordinator], SensorEntity
+):
+    """Defines a UniLED command retries sensor."""
+
+    def __init__(
+        self,
+        coordinator: UniledUpdateCoordinator,
+        channel: UniledChannel,
+    ) -> None:
+        """Initialize the command retries sensor."""
+        super().__init__(coordinator, channel, CommandRetriesFeature())
+
+    @callback
+    def _async_update_attrs(self, first: bool = False) -> None:
+        """Handle updating _attr values."""
+        super()._async_update_attrs()
+        self._attr_state_class = SensorStateClass.MEASUREMENT
+
+    @property
+    def native_value(self) -> int:
+        """Return the value reported by the sensor."""
+        return self.device.command_retries
+
+    async def async_added_to_hass(self) -> None:
+        """Handle entity which will be added."""
+        await super().async_added_to_hass()
+        # Sync retries are announced by the device write sync task,
+        # between polls, via device level callbacks.
+        self.async_on_remove(
+            self.device.register_callback(self._handle_coordinator_update)
         )
 
 

@@ -570,10 +570,12 @@ class UniledConfigFlowHandler(UniledMeshHandler, flow.ConfigFlow, domain=DOMAIN)
             ):
                 continue
 
-            # We don't (currently) support multhomed devices
             if entry.unique_id != mac:
-                _LOGGER.warning("MAC Address mismatch %s != %s", mac, entry.unique_id)
-                raise AbortFlow("mac_mismatch")
+                _LOGGER.warning(
+                    "MAC address mismatch %s != %s, treating as same device",
+                    mac,
+                    entry.unique_id,
+                )
 
             if (
                 entry.source == flow.SOURCE_IGNORE

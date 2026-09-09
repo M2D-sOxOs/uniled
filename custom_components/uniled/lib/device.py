@@ -85,6 +85,7 @@ class UniledDevice:
         self._started: bool = True
         self._channels: list[UniledChannel] = []
         self._callbacks: list[Callable[[UniledChannel], None]] = []
+        self._poll_failures: int = 0
         if isinstance(config, MappingProxyType):
             self._config = config
 
@@ -202,6 +203,25 @@ class UniledDevice:
     def has_pending_writes(self) -> bool:
         """Return whether there are unconfirmed user state writes."""
         return False
+
+    @property
+    def poll_failures(self) -> int:
+        """Return the number of consecutive failed polls."""
+        return self._poll_failures
+
+    @property
+    def max_poll_failures(self) -> int:
+        """Return consecutive failed polls before unavailable."""
+        return 1
+
+    def note_poll_failure(self) -> None:
+        """Count a consecutive failed poll."""
+        self._poll_failures += 1
+
+    @property
+    def command_retries(self) -> int:
+        """Return the number of retries for the last user command."""
+        return 0
 
     async def startup(self, event=None) -> bool:
         """Startup the device."""
