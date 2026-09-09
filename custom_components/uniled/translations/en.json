@@ -124,7 +124,6 @@
     "abort": {
       "already_configured": "Device is already configured.",
       "already_in_progress": "Configuration flow is already in progress.",
-      "mac_mismatch": "MAC Mismatch, multihomed devices not supported.",
       "mesh_not_supported": "Mesh not supported.",
       "no_devices_found": "No devices found on the network.",
       "no_response": "No response from device.",
