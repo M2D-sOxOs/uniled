@@ -12,7 +12,6 @@ import voluptuous as vol
 from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
     ATTR_COLOR_MODE,
-    ATTR_COLOR_TEMP,
     ATTR_COLOR_TEMP_KELVIN,
     ATTR_EFFECT,
     ATTR_RGB_COLOR,
@@ -26,6 +25,13 @@ from homeassistant.components.light import (
     LightEntity,
     LightEntityFeature,
 )
+
+# ATTR_COLOR_TEMP (mireds) was removed from Home Assistant (2026.x),
+# fall back to its historical value for channel state keys & service kwargs
+try:
+    from homeassistant.components.light import ATTR_COLOR_TEMP
+except ImportError:
+    ATTR_COLOR_TEMP = "color_temp"
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
 from homeassistant.helpers import entity_platform
