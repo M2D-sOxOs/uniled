@@ -72,7 +72,7 @@ from .discovery import (
 )
 from .lib.ble.device import UNILED_TRANSPORT_BLE, UniledBleDevice, UniledBleModel
 from .lib.discovery import UNILED_DISCOVERY_SOURCE_DHCP, UniledDiscovery
-from .lib.net.device import UNILED_TRANSPORT_NET, UniledNetDevice
+from .lib.net.device import UNILED_TRANSPORT_NET
 from .lib.zng.cloud import MAGICHUE_DEFAULT_COUNTRY, MagicHue
 from .lib.zng.manager import (
     CONF_ZNG_ACTIVE_SCAN as CONF_ACTIVE_SCAN,
@@ -562,20 +562,13 @@ class UniledConfigFlowHandler(UniledMeshHandler, flow.ConfigFlow, domain=DOMAIN)
         await self.async_set_unique_id(mac)
 
         for entry in self._async_current_entries(include_ignore=True):
-            # Skip if not an existing entry with a mac (in range) of the discovered device
+            # Skip if not an existing entry for the discovered device
             if not (
                 entry.unique_id
                 and ":" in entry.unique_id
-                and UniledNetDevice.mac_matches_by_two(entry.unique_id, mac)
+                and entry.unique_id == mac
             ):
                 continue
-
-            if entry.unique_id != mac:
-                _LOGGER.warning(
-                    "MAC address mismatch %s != %s, treating as same device",
-                    mac,
-                    entry.unique_id,
-                )
 
             if (
                 entry.source == flow.SOURCE_IGNORE
